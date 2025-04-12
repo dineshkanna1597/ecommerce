@@ -38,19 +38,19 @@ class CustomerProfile:
 
         # Australia: The international format is +61 followed by the last 9 digits.
         if self.locale == 'en_AU':
-            return '+61 ' + raw_number[-9:]  # last 9 digits
+            return '+61' + raw_number[-9:]  # last 9 digits
         
         # North America: The international format is +1 followed by the last 10 digits.
         elif self.locale in ['en_CA', 'en_US']:
-            return '+1 ' + raw_number[-10:]
+            return '+1' + raw_number[-10:]
         
         # United Kingdom: The international format is +44 followed by the last 10 digits.
         elif self.locale == 'en_GB':
-            return '+44 ' + raw_number[-10:]
+            return '+44' + raw_number[-10:]
         
         # India: The international format is +91 followed by the last 10 digits.
         elif self.locale == 'en_IN':
-            return '+91 ' + raw_number[-10:]
+            return '+91' + raw_number[-10:]
         
         # Fallback: Return the raw number with a '+' prefix.
         return '+' + raw_number  # fallback
@@ -101,12 +101,11 @@ headers = {
     "X-API-Key": os.getenv('API_KEY')
 }
 
+base_url = os.getenv("API_BASE_URL")
+url = f"{base_url}/user/user-profile/"
+
 # Send POST request to the server with the generated customer data
-response = requests.post(
-    'http://172.16.0.29:8000/user/user-profile/',
-    json=data,
-    headers=headers
-    )
+response = requests.post(url,json=data,headers=headers)
 
 print('Status Code:',response.status_code)
 print('Response:',response.json())
