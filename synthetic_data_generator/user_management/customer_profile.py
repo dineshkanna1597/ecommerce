@@ -102,7 +102,7 @@ headers = {
 }
 
 base_url = os.getenv("API_BASE_URL")
-url = f"{base_url}/user/user-profile/"
+url = f"{base_url}/user/user-details/"
 
 # Send POST request to the server with the generated customer data
 response = requests.post(url,json=data,headers=headers)
