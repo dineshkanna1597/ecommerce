@@ -83,7 +83,9 @@ ecommerce/
 Below is a screenshot of the aggregated results stored in Cassandra after processing the streaming data:
 
 🔝 Top Ordered Products by Quantity
+
 ![Cassandra Output](result/top_ordered_products_by_quantity.png)
 
 💸 Top Ordered Products by Revenue
+
 ![Cassandra Output](result/top_ordered_products_by_revenue.png)
