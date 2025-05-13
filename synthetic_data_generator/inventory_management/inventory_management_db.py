@@ -48,7 +48,8 @@ class InventoryManagement(DatabaseConnection):
             CREATE TABLE products(
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(30) UNIQUE NOT NULL, 
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL
             )
         '''
             self.cursor.execute(query)
@@ -63,7 +64,8 @@ class InventoryManagement(DatabaseConnection):
             CREATE TABLE materials(
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(30) UNIQUE NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL
             )
         '''
             self.cursor.execute(query)
@@ -78,7 +80,8 @@ class InventoryManagement(DatabaseConnection):
             CREATE TABLE categories(
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(30) UNIQUE NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL
             )
         '''
             self.cursor.execute(query)
@@ -93,7 +96,8 @@ class InventoryManagement(DatabaseConnection):
             CREATE TABLE sellers(
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(30) UNIQUE NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL
             )
         '''
             self.cursor.execute(query)
@@ -108,7 +112,8 @@ class InventoryManagement(DatabaseConnection):
             CREATE TABLE product_category(
             product_id INT AUTO_INCREMENT PRIMARY KEY,
             category_id INT NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             FOREIGN KEY (product_id) REFERENCES products(id) ON UPDATE CASCADE ON DELETE CASCADE,
             FOREIGN KEY (category_id) REFERENCES categories(id) ON UPDATE CASCADE ON DELETE CASCADE
             )
@@ -128,7 +133,8 @@ class InventoryManagement(DatabaseConnection):
             material_id INT NOT NULL,
             seller_id INT NOT NULL,
             price DECIMAL(10,2) NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(product_id,material_id,seller_id),
             FOREIGN KEY (product_id) REFERENCES products(id) ON UPDATE CASCADE ON DELETE CASCADE,
             FOREIGN KEY (material_id) REFERENCES materials(id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -150,7 +156,8 @@ class InventoryManagement(DatabaseConnection):
             material_id INT NOT NULL,
             seller_id INT NOT NULL,
             tax DECIMAL(10,2) NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(product_id,material_id,seller_id),
             FOREIGN KEY (product_id) REFERENCES products(id) ON UPDATE CASCADE ON DELETE CASCADE,
             FOREIGN KEY (material_id) REFERENCES materials(id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -172,7 +179,8 @@ class InventoryManagement(DatabaseConnection):
             material_id INT NOT NULL,
             seller_id INT NOT NULL,
             discount DECIMAL(10,2) NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(product_id,material_id,seller_id),
             FOREIGN KEY (product_id) REFERENCES products(id) ON UPDATE CASCADE ON DELETE CASCADE,
             FOREIGN KEY (material_id) REFERENCES materials(id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -194,7 +202,8 @@ class InventoryManagement(DatabaseConnection):
             material_id INT NOT NULL,
             seller_id INT NOT NULL,
             quantity INT NOT NULL DEFAULT 100,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(product_id,material_id,seller_id),
             FOREIGN KEY (product_id) REFERENCES products(id) ON UPDATE CASCADE ON DELETE CASCADE,
             FOREIGN KEY (material_id) REFERENCES materials(id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -209,4 +218,4 @@ class InventoryManagement(DatabaseConnection):
 
 table_obj = InventoryManagement()
 
-print(table_obj.product_quantity_tb())
+print(table_obj)

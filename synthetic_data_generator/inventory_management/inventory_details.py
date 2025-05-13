@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from datetime import datetime
 import os
 import requests
 import json
@@ -414,6 +415,8 @@ base_url = os.getenv("API_BASE_URL")
 url = f"{base_url}/inventory/product-details/"
 
 for item in data:
+    # Add created_at timestamp
+    item["created_at"] = datetime.now().isoformat()
     response = requests.post(url, json=item, headers=headers)
     print('Status Code:', response.status_code)
     try:
