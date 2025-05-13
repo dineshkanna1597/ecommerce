@@ -1,21 +1,30 @@
-# Real-Time Top Ordered Products Stream
+# 🛒 Real-Time Top Ordered Products Stream
 
-This project performs **real-time streaming analytics** to compute and display the **top ordered products by quantity** and **top ordered products by revenue**.
+This project performs **real-time streaming analytics** to compute and display:
 
-## Features
+- 📦 Top ordered products by **quantity**
+- 💰 Top ordered products by **revenue**
 
-- Real-time ingestion of order data
-- Live aggregation of:
-  -  Top products by **quantity sold**
-  -  Top products by **total revenue**
-- Sliding window support
-- Scalable architecture using modern stream processing tools
+It ingests live customer order data, processes it in real time using Apache Kafka and PySpark Streaming, and stores the aggregated results for further consumption.
 
-## Tech Stack
+## 🚀 Features
+
+- Real-time ingestion of order data via Kafka
+- Kafka producer is triggered by Apache Airflow on a schedule to create the customer order
+- Source data fetched from **MySQL**
+- Live aggregation of product sales using **PySpark Streaming**:
+  - Top products by **quantity sold**
+  - Top products by **total revenue**
+- Sliding window support for near real-time ranking
+- Aggregated results stored in **Cassandra** for fast access
+
+## 🧱 Tech Stack
 
 - **Language**: Python
-- **Stream Processor**: Apache Kafka & Pyspark Streaming
-- **Message Format**: JSON
-- **Optional**: Docker, FastAPI, Mysql, Cassandra, Airflow
-
-## Project Structure
+- **Stream Processor**: Apache Kafka & PySpark Streaming
+- **Source Database**: MySQL
+- **Target Store**: Cassandra
+- **Orchestration**: Apache Airflow
+- **Optional Components**:
+  - **Docker**: For containerized services
+  - **FastAPI**: To simulate microservices
