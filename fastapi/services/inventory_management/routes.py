@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
+from datetime import datetime
 from decimal import Decimal
 from dotenv import load_dotenv
 import os
@@ -61,19 +62,21 @@ class InventoryDetails(BaseModel):
     price: Decimal
     tax_rate: Decimal
     discount_rate: Decimal
+    created_at:datetime
 
 class Product(DatabaseConnection):
     """
     Class for handling product insertions and operations related to products.
     """
 
-    def insert(self,product_name):
+    def insert(self,product_name,created_at):
         """
         Inserts a new product into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
-            sql = 'INSERT IGNORE INTO products(name) VALUES (%s)'
-            self.cursor.execute(sql,[product_name])
+            sql = 'INSERT IGNORE INTO products(name,created_at,last_updated_at) VALUES (%s,%s,%s)'
+            self.cursor.execute(sql,(product_name,created_at,last_updated_at,))
             self.commit_and_close()
             return 'product inserted successfully'
         except mysql.connector.Error as e:
@@ -85,13 +88,14 @@ class Material(DatabaseConnection):
     Class for handling material insertions and operations related to materials.
     """
 
-    def insert(self,material_name):
+    def insert(self,material_name,created_at):
         """
         Inserts a new material into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
-            sql = 'INSERT IGNORE INTO materials(name) VALUES (%s)'
-            self.cursor.execute(sql,[material_name])
+            sql = 'INSERT IGNORE INTO materials(name,created_at,last_updated_at) VALUES (%s,%s,%s)'
+            self.cursor.execute(sql,(material_name,created_at,last_updated_at,))
             self.commit_and_close()
             return 'material inserted successfully'
         except mysql.connector.Error as e:
@@ -103,13 +107,14 @@ class Category(DatabaseConnection):
     A class to manage category insertions into the database.
     """
 
-    def insert(self,category_name):
+    def insert(self,category_name,created_at):
         """
         Inserts a new category into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
-            sql = 'INSERT IGNORE INTO categories(name) VALUES (%s)'
-            self.cursor.execute(sql,[category_name])
+            sql = 'INSERT IGNORE INTO categories(name,created_at,last_updated_at) VALUES (%s,%s,%s)'
+            self.cursor.execute(sql,(category_name,created_at,last_updated_at,))
             self.commit_and_close()
             return 'category inserted successfully'
         except mysql.connector.Error as e:
@@ -121,13 +126,14 @@ class Seller(DatabaseConnection):
     A class to manage seller insertions into the database.
     """
 
-    def insert(self,seller_name):
+    def insert(self,seller_name,created_at):
         """
         Inserts a new seller into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
-            sql = 'INSERT IGNORE INTO sellers(name) VALUES (%s)'
-            self.cursor.execute(sql,[seller_name])
+            sql = 'INSERT IGNORE INTO sellers(name,created_at,last_updated_at) VALUES (%s,%s,%s)'
+            self.cursor.execute(sql,(seller_name,created_at,last_updated_at,))
             self.commit_and_close()
             return 'seller inserted successfully'
         except mysql.connector.Error as e:
@@ -139,19 +145,20 @@ class ProductCategory(DatabaseConnection):
     Class for handling product-category relationships and operations.
     """
 
-    def insert(self,product_name,category_name):
+    def insert(self,product_name,category_name,created_at):
         """
         Inserts a product-category relationship into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             sql = '''
-            INSERT IGNORE INTO product_category(product_id,category_id)
-            SELECT p.id,c.id
+            INSERT IGNORE INTO product_category(product_id,category_id,created_at,last_updated_at)
+            SELECT p.id,c.id,%s,%s
             FROM products p
             INNER JOIN categories c ON c.name = %s
             WHERE p.name = %s
         '''
-            self.cursor.execute(sql,[category_name,product_name])
+            self.cursor.execute(sql,(created_at,last_updated_at,category_name,product_name,))
             self.commit_and_close()
             return 'product category inserted successfully'
         except mysql.connector.Error as e:
@@ -163,20 +170,21 @@ class ProductPrice(DatabaseConnection):
     Class for handling product seller price-related operations.
     """
 
-    def insert(self,product_name,material_name,seller_name,price):
+    def insert(self,product_name,material_name,seller_name,price,created_at):
         """
         Inserts product seller price details into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             sql = '''
-            INSERT IGNORE INTO product_price(product_id,material_id,seller_id,price)
-            SELECT p.id,m.id,s.id,%s
+            INSERT IGNORE INTO product_price(product_id,material_id,seller_id,price,created_at,last_updated_at)
+            SELECT p.id,m.id,s.id,%s,%s,%s
             FROM products p
             INNER JOIN materials m ON m.name = %s
             INNER JOIN sellers s ON s.name = %s
             WHERE p.name = %s
         '''
-            self.cursor.execute(sql,[price,material_name,seller_name,product_name])
+            self.cursor.execute(sql,(price,created_at,last_updated_at,material_name,seller_name,product_name,))
             self.commit_and_close()
             return 'product seller price inserted successfully'
         except mysql.connector.Error as e:
@@ -187,21 +195,22 @@ class ProductTax(DatabaseConnection):
     """
     Class for handling product tax-related operations.
     """
-
-    def insert(self,product_name,material_name,seller_name,tax_rate):
+    
+    def insert(self,product_name,material_name,seller_name,tax_rate,created_at):
         """
         Inserts product tax details into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             sql = '''
-            INSERT IGNORE INTO product_tax(product_id,material_id,seller_id,tax)
-            SELECT p.id,m.id,s.id,%s
+            INSERT IGNORE INTO product_tax(product_id,material_id,seller_id,tax,created_at,last_updated_at)
+            SELECT p.id,m.id,s.id,%s,%s,%s
             FROM products p
             INNER JOIN materials m ON m.name = %s
             INNER JOIN sellers s ON s.name = %s
             WHERE p.name = %s
         '''
-            self.cursor.execute(sql,[tax_rate,material_name,seller_name,product_name])
+            self.cursor.execute(sql,(tax_rate,created_at,last_updated_at,material_name,seller_name,product_name,))
             self.commit_and_close()
             return 'product tax inserted successfully'
         except mysql.connector.Error as e:
@@ -212,20 +221,21 @@ class ProductDiscount(DatabaseConnection):
     """
     Class for handling product discount-related operations.
     """
-    def insert(self,product_name,material_name,seller_name,discount_rate):
+    def insert(self,product_name,material_name,seller_name,discount_rate,created_at):
         """
         Inserts product discount details into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             sql = '''
-            INSERT IGNORE INTO product_discount(product_id,material_id,seller_id,discount)
-            SELECT p.id,m.id,s.id,%s
+            INSERT IGNORE INTO product_discount(product_id,material_id,seller_id,discount,created_at,last_updated_at)
+            SELECT p.id,m.id,s.id,%s,%s,%s
             FROM products p
             INNER JOIN materials m ON m.name = %s
             INNER JOIN sellers s ON s.name = %s
             WHERE p.name = %s
         '''
-            self.cursor.execute(sql,[discount_rate,material_name,seller_name,product_name])
+            self.cursor.execute(sql,(discount_rate,created_at,last_updated_at,material_name,seller_name,product_name,))
             self.commit_and_close()
             return 'product discount inserted successfully'
         except mysql.connector.Error as e:
@@ -237,20 +247,21 @@ class ProductQuantity(DatabaseConnection):
     Class for handling product quantities and stock management.
     """
 
-    def insert(self,product_name,material_name,seller_name):
+    def insert(self,product_name,material_name,seller_name,created_at):
         """
         Inserts a product quantity into the database.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             sql = '''
-            INSERT IGNORE INTO product_quantity(product_id,material_id,seller_id)
-            SELECT p.id,m.id,s.id
+            INSERT IGNORE INTO product_quantity(product_id,material_id,seller_id,created_at,last_updated_at)
+            SELECT p.id,m.id,s.id,%s,%s
             FROM products p
             INNER JOIN materials m ON m.name = %s
             INNER JOIN sellers s ON s.name = %s
             WHERE p.name = %s
         '''
-            self.cursor.execute(sql,[material_name,seller_name,product_name])
+            self.cursor.execute(sql,(created_at,last_updated_at,material_name,seller_name,product_name,))
             self.commit_and_close()
             return 'product quantity inserted successfully'
         except mysql.connector.Error as e:
@@ -267,43 +278,31 @@ def verify_api_key(x_api_key: str = Header(...)):
             detail="Invalid or missing API Key",
         )
     
+def try_insert(class_name: str, insert_callable):
+    try:
+        return insert_callable()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"[{class_name}] {str(e)}")
+    
 # Define a POST endpoint for creating a inventory details
 # The route is protected by the API key dependency
 @router.post('/product-details/', dependencies=[Depends(verify_api_key)])
 def create_profile(inventory: InventoryDetails) -> dict:
     # Convert the incoming Pydantic model to a Python dictionary
     data = inventory.dict()
-    try:
-        product_name = Product().insert(data['product_name'])
-        material_name = Material().insert(data['material_name'])
-        category_name = Category().insert(data['category_name'])
-        seller_name = Seller().insert(data['seller_name'])
-        product_category = ProductCategory().insert(data['product_name'],data['category_name'])
-        product_quantity = ProductQuantity().insert(
-            data['product_name'],data['material_name'],data['seller_name']
-        )
-        product_seller_price = ProductPrice().insert(
-            data['product_name'],data['material_name'],data['seller_name'],data['price']
-        )
-        product_tax = ProductTax().insert(
-            data['product_name'],data['material_name'],data['seller_name'],data['tax_rate']
-        )
-        product_discount = ProductDiscount().insert(
-            data['product_name'],data['material_name'],data['seller_name'],data['discount_rate']
-        )
-
-        # Return a success message or result
-        return {
-            'product message':product_name,
-            'material message':material_name,
-            'category message':category_name,
-            'seller message':seller_name,
-            'product category message':product_category,
-            'product quantity message':product_quantity,
-            'product seller price message':product_seller_price,
-            'product tax message':product_tax,
-            'product discount message':product_discount
-        }
-    except Exception as e:
-        # In case of any error during insertion, raise a 500 Internal Server Error
-        raise HTTPException(status_code=500,detail=str(e))
+    return {
+        'product message': try_insert("Product", lambda: Product().insert(data['product_name'], data['created_at'])),
+        'material message': try_insert("Material", lambda: Material().insert(data['material_name'], data['created_at'])),
+        'category message': try_insert("Category", lambda: Category().insert(data['category_name'], data['created_at'])),
+        'seller message': try_insert("Seller", lambda: Seller().insert(data['seller_name'], data['created_at'])),
+        'product category message': try_insert("ProductCategory", lambda: ProductCategory().insert(
+            data['product_name'], data['category_name'], data['created_at'])),
+        'product quantity message': try_insert("ProductQuantity", lambda: ProductQuantity().insert(
+            data['product_name'], data['material_name'], data['seller_name'], data['created_at'])),
+        'product seller price message': try_insert("ProductPrice", lambda: ProductPrice().insert(
+            data['product_name'], data['material_name'], data['seller_name'], data['price'], data['created_at'])),
+        'product tax message': try_insert("ProductTax", lambda: ProductTax().insert(
+            data['product_name'], data['material_name'], data['seller_name'], data['tax_rate'], data['created_at'])),
+        'product discount message': try_insert("ProductDiscount", lambda: ProductDiscount().insert(
+            data['product_name'], data['material_name'], data['seller_name'], data['discount_rate'], data['created_at']))
+    }
