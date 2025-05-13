@@ -11,9 +11,9 @@ spark = SparkSession.builder \
     .config("spark.sql.autoBroadcastJoinThreshold", 10 * 1024 * 1024) \
     .getOrCreate()
 
-spark.conf.set("spark.cassandra.connection.host", "172.16.0.26")
-spark.conf.set("spark.cassandra.auth.username", "admin")
-spark.conf.set("spark.cassandra.auth.password", "DKCassandra@1597")
+spark.conf.set("spark.cassandra.connection.host", "HOST")
+spark.conf.set("spark.cassandra.auth.username", "USERNAME")
+spark.conf.set("spark.cassandra.auth.password", "USERPASSWORD")
 
 # Define schemas
 customer_schema = StructType([
@@ -79,7 +79,7 @@ shipment_schema = StructType([
 
 # Read from Kafka
 kafka_df = spark.readStream.format("kafka") \
-    .option("kafka.bootstrap.servers", "kafka:9092") \
+    .option("kafka.bootstrap.servers", "HOST:PORT") \
     .option("subscribe", "customer_created,inventory_created,payment_created,order_created,shipment_created") \
     .option("startingOffsets", "earliest") \
     .option("maxOffsetsPerTrigger", 100) \
@@ -182,13 +182,13 @@ def process_batch(batch_df, epoch_id):
         # Load existing quantity data
         existing_quantity_df = spark.read \
             .format("org.apache.spark.sql.cassandra") \
-            .options(table="top_ordered_products_by_quantity", keyspace="ecommerce") \
+            .options(table="YOURTABLENAME", keyspace="YOURKEYSPACE") \
             .load()
 
         # Load existing amount data
         existing_amount_df = spark.read \
             .format("org.apache.spark.sql.cassandra") \
-            .options(table="top_ordered_products_by_amount", keyspace="ecommerce") \
+            .options(table="YOURTABLENAME", keyspace="YOURKEYSPACE") \
             .load()
 
         # Merge cumulative quantity
@@ -237,7 +237,7 @@ def process_batch(batch_df, epoch_id):
         ranked_qty.write \
             .format("org.apache.spark.sql.cassandra") \
             .mode("append") \
-            .options(table="top_ordered_products_by_quantity", keyspace="ecommerce") \
+            .options(table="YOURTABLENAME", keyspace="YOURKEYSPACE") \
             .option("confirm.truncate", "true") \
             .save()
 
@@ -245,7 +245,7 @@ def process_batch(batch_df, epoch_id):
         ranked_amt.write \
             .format("org.apache.spark.sql.cassandra") \
             .mode("append") \
-            .options(table="top_ordered_products_by_amount", keyspace="ecommerce") \
+            .options(table="YOURTABLENAME", keyspace="YOURKEYSPACE") \
             .option("confirm.truncate", "true") \
             .save()
 
