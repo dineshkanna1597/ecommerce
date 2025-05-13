@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
-from datetime import date
+from datetime import date,datetime
 from dotenv import load_dotenv
 import os
 import mysql.connector
@@ -69,6 +69,7 @@ class UserProfile(BaseModel):
     city: str
     postalcode: str
     street: str
+    created_at: datetime
 
 class CustomerBio(DatabaseConnection):
     """
@@ -79,10 +80,11 @@ class CustomerBio(DatabaseConnection):
         """
         Inserts a new customer record into the 'customer_bio' table.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             query = '''
-                INSERT INTO customer_bio (name, mobile_number, email_id, dob, gender)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO customer_bio (name, mobile_number, email_id, dob, gender,created_at,last_updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s,%s)
             '''
             values = (
                 data['customer_name'],
@@ -90,6 +92,8 @@ class CustomerBio(DatabaseConnection):
                 data['email_id'],
                 data['dob'],
                 data['gender'],
+                data['created_at'],
+                last_updated_at,
             )
             self.cursor.execute(query, values)  # Execute the insert query
             self.commit_and_close()  # Commit the transaction and close the connection
@@ -108,9 +112,10 @@ class Country(DatabaseConnection):
         """
         Inserts a new country into the 'country' table.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
-            query = 'INSERT IGNORE INTO country (name) VALUES (%s)'
-            value = (data['country'],)
+            query = 'INSERT IGNORE INTO country (name,created_at,last_updated_at) VALUES (%s,%s,%s)'
+            value = (data['country'],data['created_at'],last_updated_at,)
             self.cursor.execute(query, value)  # Execute the insert query
             self.commit_and_close()  # Commit the transaction and close the connection
             return "Country inserted successfully"
@@ -127,16 +132,19 @@ class State(DatabaseConnection):
         """
         Inserts a new state into the 'state' table. If the country does not exist, it is inserted first.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             query = '''
-            INSERT IGNORE INTO state(name,country_id)
-            SELECT %s,c.id 
+            INSERT IGNORE INTO state(name,country_id,created_at,last_updated_at)
+            SELECT %s,c.id,%s,%s
             FROM country c
             WHERE c.name = %s
         '''
             values = (
                 data['state'],
-                data['country']
+                data['created_at'],
+                last_updated_at,
+                data['country'],
             )
             self.cursor.execute(query, values)  # Execute the insert query
             self.commit_and_close()  # Commit the transaction and close the connection
@@ -154,18 +162,21 @@ class City(DatabaseConnection):
         """
         Inserts a new city into the 'city' table. If the state does not exist, it is inserted first.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             query = '''
-            INSERT IGNORE INTO city(name,state_id)
-            SELECT %s,s.id
+            INSERT IGNORE INTO city(name,state_id,created_at,last_updated_at)
+            SELECT %s,s.id,%s,%s
             FROM state s
             INNER JOIN country c ON s.country_id = c.id
             WHERE s.name = %s AND c.name = %s
         '''
             values = (
                 data['city'],
+                data['created_at'],
+                last_updated_at,
                 data['state'],
-                data['country']
+                data['country'],
             )
             self.cursor.execute(query, values)  # Execute the insert query
             self.commit_and_close()  # Commit the transaction and close the connection
@@ -178,15 +189,16 @@ class PostalCode(DatabaseConnection):
     """
     This class extends DatabaseConnection to handle operations related to the 'postalcode' table.
     """
-
+    
     def insert(self, data):
         """
         Inserts a new postal code into the 'postalcode' table. If the city does not exist, it is inserted first.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             query = '''
-            INSERT IGNORE INTO postalcode(postalcode,city_id)
-            SELECT %s, cty.id
+            INSERT IGNORE INTO postalcode(postalcode,city_id,created_at,last_updated_at)
+            SELECT %s, cty.id,%s,%s
             FROM city cty
             INNER JOIN state s ON cty.state_id = s.id
             INNER JOIN country c ON s.country_id = c.id
@@ -194,9 +206,11 @@ class PostalCode(DatabaseConnection):
         '''
             values = (
                 data['postalcode'],
+                data['created_at'],
+                last_updated_at,
                 data['city'],
                 data['state'],
-                data['country']
+                data['country'],
             )
             self.cursor.execute(query, values)  # Execute the insert query
             
@@ -215,10 +229,11 @@ class Street(DatabaseConnection):
         """
         Inserts a new street into the 'street' table. If the postal code does not exist, it is inserted first.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             query = '''
-            INSERT IGNORE INTO street(name,postalcode_id)
-            SELECT %s,p.id
+            INSERT IGNORE INTO street(name,postalcode_id,created_at,last_updated_at)
+            SELECT %s,p.id,%s,%s
             FROM postalcode p
             INNER JOIN city cty ON p.city_id = cty.id
             INNER JOIN state s ON cty.state_id = s.id
@@ -227,16 +242,25 @@ class Street(DatabaseConnection):
         '''
             values = (
                 data['street'], 
+                data['created_at'],
+                last_updated_at,
                 data['postalcode'], 
                 data['city'], 
                 data['state'], 
-                data['country'])
+                data['country'],
+                )
             self.cursor.execute(query, values)  # Execute the insert query
             self.commit_and_close()  # Commit the transaction and close the connection
             return "Street and postal code ID inserted successfully"
         except mysql.connector.Error as e:
             self.rollback_and_close()
             raise e
+
+def safe_insert(class_name: str, insert_callable):
+    try:
+        return insert_callable()
+    except Exception as e:
+        raise Exception(f"[{class_name}] {str(e)}")
 
 class Address(DatabaseConnection):
     """
@@ -247,23 +271,24 @@ class Address(DatabaseConnection):
         """
         Inserts a new address record into the 'address' table.
         """
+        last_updated_at = datetime.now().isoformat()
         try:
             # check customer details
-            CustomerBio().insert(data)
+            safe_insert("CustomerBio", lambda: CustomerBio().insert(data))
             # check country details
-            Country().insert(data)
+            safe_insert("Country", lambda: Country().insert(data))
             # check state details
-            State().insert(data)
+            safe_insert("State", lambda: State().insert(data))
             # check city details
-            City().insert(data)
+            safe_insert("City", lambda: City().insert(data))
             # check postalcode details
-            PostalCode().insert(data)
+            safe_insert("PostalCode", lambda: PostalCode().insert(data))
             # check street details
-            Street().insert(data)
+            safe_insert("Street", lambda: Street().insert(data))
             # Insert the complete address into the address table
             sql = '''
-            INSERT INTO address(customer_id, street_id)
-            SELECT cb.id,strt.id
+            INSERT INTO address(customer_id, street_id,created_at,last_updated_at)
+            SELECT cb.id,strt.id,%s,%s
             FROM customer_bio cb
             INNER JOIN street strt ON strt.name = %s
             INNER JOIN postalcode p ON strt.postalcode_id = p.id
@@ -274,6 +299,8 @@ class Address(DatabaseConnection):
                 AND p.postalcode = %s AND cty.name = %s AND s.name = %s AND c.name = %s 
             '''
             values = (
+                data['created_at'],
+                last_updated_at,
                 data['street'],
                 data['mobile_number'],
                 data['email_id'],
