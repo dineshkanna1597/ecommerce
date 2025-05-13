@@ -85,7 +85,7 @@ class Inventory(DatabaseConnection):
     def product_details(self):
         product_counts = random.randint(1,10)
         query = f'''
-        SELECT products.name,materials.name,categories.name,sellers.name,
+        SELECT pp.id,products.name,materials.name,categories.name,sellers.name,
                pp.price,pt.tax,pd.discount
         FROM product_price pp
         INNER JOIN products ON pp.product_id = products.id
@@ -103,13 +103,14 @@ class Inventory(DatabaseConnection):
         result = self.cursor.fetchall()
 
         return [{
-            'product':row[0],
-            'material':row[1],
-            'category':row[2],
-            'soldBy':row[3],
-            'price':float(row[4]),
-            'tax':float(row[5]),
-            'discount':float(row[6])
+            'id':row[0],
+            'product':row[1],
+            'material':row[2],
+            'category':row[3],
+            'soldBy':row[4],
+            'price':float(row[5]),
+            'tax':float(row[6]),
+            'discount':float(row[7])
         }for row in result]
 
 class OrderDetails(DatabaseConnection):
@@ -121,8 +122,9 @@ class OrderDetails(DatabaseConnection):
         self.pod_payment_method = random.choice(['credit card','debit card','upi','cash'])
         self.base_url = os.getenv("API_BASE_URL")
         self.headers = {"X-API-Key": os.getenv('API_KEY')}
-        self.payment_url = f"{self.base_url}/payment/payment-details/"
-        self.shipment_url = f"{self.base_url}/shipment/shipment-details/"
+        self.order_url = f"{self.base_url}/order/order-details/"
+        self.payment_gateway_url = f"{self.base_url}/payment/payment-gateway/generate/"
+        self.shipment_url = f"{self.base_url}/shipment/shipment-gateway/generate/"
         self.country = self.customer_details['address']['country']
         self.order_id = None
         self.order_summary = None
@@ -153,6 +155,7 @@ class OrderDetails(DatabaseConnection):
 
     def get_customer_details(self):
         return {
+            'id':self.customer_details['id'],
             'name':self.customer_details['name'],
             'mobileNumber':self.customer_details['mobileNumber'],
             'emailId':self.customer_details['emailId'],
@@ -176,6 +179,7 @@ class OrderDetails(DatabaseConnection):
             formatted_discount = format_currency(discount, currency, locale=locale)
             
             items_ordered.append({
+                'id':item['id'],
                 'product': item['product'],
                 'material': item['material'],
                 'soldBy': item['soldBy'],
@@ -187,23 +191,29 @@ class OrderDetails(DatabaseConnection):
         self.items_ordered = items_ordered
         return items_ordered
     
-    def calculated_order_summary(self, items_ordered):
+    def calculated_order_summary(self):
         country = self.country
         currency = self.country_data[country]['currency']
         locale = self.country_data[country]['locale']
 
-        subtotal = round(sum(float(re.sub(r'[^\d.]', '', item['totalPrice'])) for item in items_ordered),2)
-        formatted_subtotal = format_currency(subtotal, currency, locale=locale)
+        subtotal = tax = discount = 0.0
 
-        tax = round(sum(float(re.sub(r'[^\d.]', '', item['tax'])) for item in items_ordered),2)
+        for item in self.items_ordered:
+            subtotal += float(re.sub(r'[^\d.]', '', item.get('totalPrice')))
+            tax += float(re.sub(r'[^\d.]', '', item.get('tax')))
+            discount += float(re.sub(r'[^\d.]', '', item.get('discount')))
+
+        subtotal = round(subtotal, 2)
+        tax = round(tax, 2)
+        discount = round(discount, 2)
+
+        formatted_subtotal = format_currency(subtotal, currency, locale=locale)
         formatted_tax = format_currency(tax, currency, locale=locale)
-        
-        discount = round(sum(float(re.sub(r'[^\d.]', '', item['discount'])) for item in items_ordered),2)
         formatted_discount = format_currency(discount, currency, locale=locale)
-        
+
         grand_total = round(subtotal + tax - discount, 2)
         formatted_grand_total = format_currency(grand_total, currency, locale=locale)
-        
+
         self.order_summary = {
             'itemsSubtotal': formatted_subtotal,
             'tax': formatted_tax,
@@ -214,50 +224,71 @@ class OrderDetails(DatabaseConnection):
 
     def get_payment_details(self,shipment_status=None):
      # Send POST request to the server with the generated customer data
+        created_at = datetime.now().isoformat()
         try:
             if self.payment_type == 'pay on delivery':
-                if shipment_status == 'Delivered':
+                if shipment_status == 'Delivered' and self.pod_payment_method != 'cash':
                     payload = {
                     "order_id": str(self.order_id),
+                    "payment_type":'pay on delivery',
                     "payment_method": self.pod_payment_method,   # e.g., "card", or a token from frontend
-                    "amount": self.order_summary['grandTotal']  # Convert to smallest currency unit if needed
+                    "amount": self.order_summary['grandTotal'],  # Convert to smallest currency unit if needed
+                    "created_at":created_at
                 }
                     
+                elif shipment_status == 'Delivered' and self.pod_payment_method == 'cash':
+                    payload = {
+                    "order_id": str(self.order_id),
+                    "payment_type":'pay on delivery',
+                    "payment_method": self.pod_payment_method,   # e.g., "card", or a token from frontend
+                    "amount": self.order_summary['grandTotal'],  # Convert to smallest currency unit if needed
+                    "created_at":created_at
+                }
                 else:
-                    return {
-                            "paymentType":self.payment_type,
-                            "paymentStatus": "Pending"
-                        }
+                    payload = {
+                    "order_id": str(self.order_id),
+                    "payment_type":'pay on delivery',
+                    "payment_method": None,   # e.g., "card", or a token from frontend
+                    "amount": self.order_summary['grandTotal'],  # Convert to smallest currency unit if needed
+                    "created_at":created_at
+                }
             else:
                 payload = {
                     "order_id": str(self.order_id),
+                    "payment_type": 'prepaid',
                     "payment_method": self.prepaid_payment_method,   # e.g., "card", or a token from frontend
-                    "amount": self.order_summary['grandTotal']  # Convert to smallest currency unit if needed
+                    "amount": self.order_summary['grandTotal'],  # Convert to smallest currency unit if needed
+                    "created_at":created_at
                 }
 
-            response = requests.post(self.payment_url,json=payload,headers=self.headers)
+            response = requests.post(self.payment_gateway_url,json=payload,headers=self.headers)
             response.raise_for_status()
             response_data = response.json().get("message")
+            
+            try:
+                print('Status Code:', response.status_code)
+            except Exception as e:
+                print('Error:', e)
+                print('Raw Response:', response.text)
 
             return {
-                    'paymentType':self.payment_type,
+                    'transactionId': response_data.get('transactionId'),
+                    'paymentType':response_data.get('paymentType'),
                     'paymentMethod': response_data.get('paymentMethod'),
                     'amount': response_data.get('amount'),
                     'paymentStatus': response_data.get('paymentStatus'),
-                    'transactionId': response_data.get('transactionId'),
-                    'datetime':response_data.get('paymentEnd')
+                    'processedAt':response_data.get('processedAt')
                 }
         
         except requests.RequestException as e:
-            return {
-                'error': str(e)
-            }
-     
+            print('error:',str(e))
+            
     def get_shipping_details(self):
         order_id = str(self.order_id)
         customer_name = self.get_customer_details().get('name')
         mobile_number = self.get_customer_details().get('mobileNumber')
         address = self.get_customer_details().get('address')
+        created_at = datetime.now().isoformat()
         
         shipment = {
             'orderId':order_id,
@@ -265,34 +296,94 @@ class OrderDetails(DatabaseConnection):
                 'name':customer_name,
                 'mobileNumber':mobile_number,
                 'address':address
-            }
+            },
+            'created_at':created_at
         }
     
         try:
             response = requests.post(self.shipment_url,json=shipment,headers=self.headers)
             response.raise_for_status()
             response_data = response.json().get("message")
+            
+            try:
+                print('Status Code:', response.status_code)
+            except Exception as e:
+                print('Error:', e)
+                print('Raw Response:', response.text)
     
             return {
             'trackerId':response_data.get('trackerId'),
             'deliveryTo':response_data.get('deliveryTo'),
-            'shippingStatus':response_data.get('status')
+            'shippingStatus':response_data.get('status'),
+            'updated_at':response_data.get('updated_at')
         }
         except requests.RequestException as e:
-            return {
-                'error': str(e)
-            }
+            print('error:',str(e))
     
-    def confirm_order(self):
+    def insert_customer_order(self):
         self.order_id = uuid.uuid4()
         customer_info = self.get_customer_details()
-        items = self.get_item_details()
-        summary = self.calculated_order_summary(items)
+        items_list = self.get_item_details()
+        items = []
+        for item in items_list:
+            items.append({
+                'id': item.get('id'),
+                'quantity': item.get('quantity'),
+                'totalPrice': item.get('totalPrice')
+            })
+        self.summary = self.calculated_order_summary()
+        created_at = datetime.now().isoformat()
+        data = {
+            'order_id':str(self.order_id),
+            'customer_id':customer_info.get('id'),
+            'items': items,
+            'order_summary': self.summary,
+            'created_at':created_at
+        }
+        response = requests.post(self.order_url,json=data,headers=self.headers)
+        
+        try:
+            print('Status Code:', response.status_code)
+        except Exception as e:
+            print('Error:', e)
+            print('Raw Response:', response.text)
+
+    def update_order_status(self, order_id, order_status):
+        updated_at = datetime.now().isoformat()
+        data = {
+            'order_id': str(order_id),
+            'order_status': order_status,
+            'updated_at':updated_at
+        }
+        response = requests.patch(self.order_url, json=data, headers=self.headers)
+        
+        try:
+            print('Status Code:', response.status_code)
+        except Exception as e:
+            print('Error:', e)
+            print('Raw Response:', response.text)
+
+    def confirm_order(self):
+        self.insert_customer_order()
+        order_id = self.order_id
+        customer_info = self.customer_details
+        items_list = self.get_item_details()
+        items = []
+        for item in items_list:
+            items.append({
+                'product': item.get('product'),
+                'material': item.get('material'),
+                'soldBy': item.get('soldBy'),
+                'quantity': item.get('quantity'),
+                'totalPrice': item.get('totalPrice')
+            })
+        summary = self.summary
         payment = self.get_payment_details()
         payment_mode = self.payment_type
         payment_status = payment.get('paymentStatus')
+        created_at = datetime.now().isoformat()
 
-        if payment_mode == 'prepaid' and payment_status == 'success':
+        if payment_mode == 'prepaid' and payment_status == 'paid':
             order_status = 'Confirmed'
             shipment_details = self.get_shipping_details()
 
@@ -300,7 +391,7 @@ class OrderDetails(DatabaseConnection):
             order_status = 'Payment on processing. Your order has been pending. Please wait'
             shipment_details = None
 
-        elif payment_mode == 'pay on delivery' and payment_status == 'Pending':
+        elif payment_mode == 'pay on delivery' and payment_status == 'pending':
             order_status = 'Confirmed'
             shipment_details = self.get_shipping_details()
             shipment_status = shipment_details.get('shippingStatus')
@@ -311,24 +402,21 @@ class OrderDetails(DatabaseConnection):
             order_status = 'Payment failed. Your order has been cancelled. Please try again.'
             shipment_details = None
 
+        self.update_order_status(order_id, order_status)
+
         return {
-            "orderId": str(self.order_id),
+            "orderId": str(order_id),
             "customerDetails": customer_info,
             "orderDetails": {
                 'itemsOrdered': items,
                 'orderSummary': summary,
-                'orderStatus': order_status
+                'orderStatus': order_status,
+                'created_at':created_at
             },
             "paymentDetails": payment,
             "shippingDetails": shipment_details
         }
         
 obj = OrderDetails()
-processed = obj.confirm_order()
-
-if "error" in processed:
-    print("Error:", processed["details"])
-else:
-    print("Processed message:")
-    print(json.dumps(processed, indent=4,ensure_ascii=False))
-
+data = obj.confirm_order()
+print(json.dumps(data,indent=4,ensure_ascii=False))
