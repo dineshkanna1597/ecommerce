@@ -38,47 +38,48 @@ Below is a screenshot of the aggregated results stored in Cassandra after proces
 
 ## 📁 Project Structure
 
+```text
 e-commerce/
-├── airflow/ # Apache Airflow DAGs
-│ └── dag.py # DAG triggering Kafka producer
+├── airflow/                            # Apache Airflow DAGs
+│   └── dag.py                          # DAG triggering Kafka producer
 ├── fastapi/
-│ ├── services/
-│ │ ├── inventory_management/
-│ │ │ ├── inventory_details.py
-│ │ │ └── routes.py
-│ │ ├── order_management/
-│ │ │ ├── order_details.py
-│ │ │ ├── order_summary.py
-│ │ │ └── routes.py
-│ │ ├── shipping_management/
-│ │ │ ├── shipment_gateway.py
-│ │ │ ├── shipment_router.py
-│ │ │ └── routes.py
-│ │ ├── transaction_management/
-│ │ │ ├── payment_gateway.py
-│ │ │ ├── payment_router.py
-│ │ │ └── routes.py
-│ │ └── user_management/
-│ │ ├── customer_profile.py
-│ │ └── routes.py
-│ └── main.py # FastAPI entry point
+│   ├── services/
+│   │   ├── inventory_management/
+│   │   │   ├── inventory_details.py
+│   │   │   └── routes.py
+│   │   ├── order_management/
+│   │   │   ├── order_details.py
+│   │   │   ├── order_summary.py
+│   │   │   └── routes.py
+│   │   ├── shipping_management/
+│   │   │   ├── shipment_gateway.py
+│   │   │   ├── shipment_router.py
+│   │   │   └── routes.py
+│   │   ├── transaction_management/
+│   │   │   ├── payment_gateway.py
+│   │   │   ├── payment_router.py
+│   │   │   └── routes.py
+│   │   └── user_management/
+│   │       ├── customer_profile.py
+│   │       └── routes.py
+│   └── main.py                         # FastAPI entry point
 ├── pyspark/
-│ └── streaming.py # PySpark Streaming logic
+│   └── streaming.py                    # PySpark Streaming logic
 ├── result/
-│ ├── top_ordered_products_by_quantity.png
-│ └── top_ordered_products_by_revenue.png
+│   ├── top_ordered_products_by_quantity.png
+│   └── top_ordered_products_by_revenue.png
 ├── synthetic_data_generator/
-│ ├── inventory_management/
-│ │ ├── inventory_details.py
-│ │ └── inventory_management_db.py
-│ ├── order_management/
-│ │ ├── confluent_kafka_producer.py
-│ │ ├── order_details.py
-│ │ └── order_management_db.py
-│ ├── shipping_management/
-│ │ └── shipping_management_db.py
-│ ├── transaction_management/
-│ │ └── transaction_management_db.py
-│ └── user_management/
-│ ├── customer_profile.py
-│ └── user_management_db.py
+│   ├── inventory_management/
+│   │   ├── inventory_details.py
+│   │   └── inventory_management_db.py
+│   ├── order_management/
+│   │   ├── confluent_kafka_producer.py
+│   │   ├── order_details.py
+│   │   └── order_management_db.py
+│   ├── shipping_management/
+│   │   └── shipping_management_db.py
+│   ├── transaction_management/
+│   │   └── transaction_management_db.py
+│   └── user_management/
+│       ├── customer_profile.py
+│       └── user_management_db.py
