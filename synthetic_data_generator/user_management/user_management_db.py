@@ -51,7 +51,8 @@ class UserManagement(DatabaseConnection):
             email_id VARCHAR(50) UNIQUE NOT NULL,
             dob DATE NOT NULL,
             gender VARCHAR(15) NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL
             )
         '''
             self.cursor.execute(query)
@@ -66,7 +67,8 @@ class UserManagement(DatabaseConnection):
             CREATE TABLE country(
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(15) UNIQUE NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL
             )        
         '''
             self.cursor.execute(query)
@@ -82,7 +84,8 @@ class UserManagement(DatabaseConnection):
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(50) NOT NULL,
             country_id INT NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(name,country_id),
             FOREIGN KEY (country_id) REFERENCES country(id) ON UPDATE CASCADE ON DELETE CASCADE
             )
@@ -100,7 +103,8 @@ class UserManagement(DatabaseConnection):
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(50) NOT NULL,
             state_id INT NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(name,state_id),
             FOREIGN KEY (state_id) REFERENCES state(id) ON UPDATE CASCADE ON DELETE CASCADE
             )
@@ -117,7 +121,8 @@ class UserManagement(DatabaseConnection):
             id INT AUTO_INCREMENT PRIMARY KEY,
             postalcode VARCHAR(30) NOT NULL,
             city_id INT NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(postalcode,city_id),
             FOREIGN KEY (city_id) REFERENCES city(id) ON UPDATE CASCADE ON DELETE CASCADE
             )
@@ -135,7 +140,8 @@ class UserManagement(DatabaseConnection):
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(50) NOT NULL,
             postalcode_id INT NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(name,postalcode_id),
             FOREIGN KEY (postalcode_id) REFERENCES postalcode(id) ON UPDATE CASCADE ON DELETE CASCADE
             )
@@ -153,7 +159,8 @@ class UserManagement(DatabaseConnection):
             id INT AUTO_INCREMENT PRIMARY KEY,
             customer_id INT NOT NULL,
             street_id INT NOT NULL,
-            last_updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            created_at DATETIME NOT NULL,
+            last_updated_at DATETIME NOT NULL,
             UNIQUE(customer_id,street_id),
             FOREIGN KEY (customer_id) REFERENCES customer_bio(id) ON UPDATE CASCADE ON DELETE CASCADE,
             FOREIGN KEY (street_id) REFERENCES street(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -166,4 +173,4 @@ class UserManagement(DatabaseConnection):
             raise e
         
 table_obj = UserManagement()
-print(table_obj.postalcode_tb())
+print(table_obj.address_tb())

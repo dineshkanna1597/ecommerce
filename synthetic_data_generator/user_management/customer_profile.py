@@ -1,4 +1,5 @@
 from faker import Faker
+from datetime import datetime
 from dotenv import load_dotenv
 import requests
 import json
@@ -95,6 +96,9 @@ profile = CustomerProfile()
 
 # Generate a fake customer profile
 data = profile.customer_details()
+
+# Add a created_at field with current UTC datetime in ISO 8601 format
+data['created_at'] = datetime.now().isoformat()
 
 # Set up request headers, including API key from environment variables
 headers = {
