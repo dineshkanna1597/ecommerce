@@ -5,7 +5,7 @@ from order_details import OrderDetails  # Import OrderDetails from order_details
 
 # Configuration for Kafka producer
 conf = {
-    'bootstrap.servers': 'kafka:9092',
+    'bootstrap.servers': 'HOST:PORT',
     'client.id': 'order-producer'
 }
 
@@ -15,9 +15,9 @@ producer = Producer(conf)
 # Callback for delivery report
 def delivery_report(err, msg):
     if err is not None:
-        print(f"❌ Delivery failed for record {msg.key()}: {err}")
+        print(f" Delivery failed for record {msg.key()}: {err}")
     else:
-        print(f"✅ Record {msg.key()} successfully produced to {msg.topic()} [{msg.partition()}]")
+        print(f" Record {msg.key()} successfully produced to {msg.topic()} [{msg.partition()}]")
 
 # Helper function to get current UTC time in ISO 8601 format
 def current_event_time():
