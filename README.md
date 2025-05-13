@@ -29,13 +29,6 @@ It ingests live customer order data, processes it in real time using Apache Kafk
   - **Docker**: For containerized services
   - **FastAPI**: To simulate microservices
 
-## 🗃️ Cassandra Output Preview
-
-Below is a screenshot of the aggregated results stored in Cassandra after processing the streaming data:
-
-![Cassandra Output](result/top_ordered_products_by_quantity.png)
-![Cassandra Output](result/top_ordered_products_by_revenue.png)
-
 ## 📁 Project Structure
 
 ```text
@@ -83,3 +76,11 @@ e-commerce/
 │   └── user_management/
 │       ├── customer_profile.py
 │       └── user_management_db.py
+```
+
+## 🗃️ Cassandra Output Preview
+
+Below is a screenshot of the aggregated results stored in Cassandra after processing the streaming data:
+
+![Cassandra Output](result/top_ordered_products_by_quantity.png)
+![Cassandra Output](result/top_ordered_products_by_revenue.png)
