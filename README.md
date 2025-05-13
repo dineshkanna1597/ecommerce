@@ -32,7 +32,7 @@ It ingests live customer order data, processes it in real time using Apache Kafk
 ## 📁 Project Structure
 
 ```text
-e-commerce/
+ecommerce/
 ├── airflow/                            # Apache Airflow DAGs
 │   └── dag.py                          # DAG triggering Kafka producer
 ├── fastapi/
