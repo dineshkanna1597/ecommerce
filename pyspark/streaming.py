@@ -126,7 +126,7 @@ order_df = parsed_df.filter("key = 'order'") \
         col("order.created_at"),
         col("order.eventTime").alias("order_eventTime")
     ) \
-    .withWatermark("order_eventTime", "30 minutes")  # Apply watermark only here
+    .withWatermark("order_eventTime", "30 minutes")
 
 payment_df = parsed_df.filter("key = 'payment'") \
     .select(from_json(col("value"), payment_schema).alias("payment")) \
